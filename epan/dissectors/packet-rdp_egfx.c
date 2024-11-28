@@ -48,6 +48,20 @@ static int hf_egfx_reset_monitorDefRight;
 static int hf_egfx_reset_monitorDefBottom;
 static int hf_egfx_reset_monitorDefFlags;
 
+static int hf_egfx_w2s1_surface_id;
+static int hf_egfx_w2s1_codec_id;
+static int hf_egfx_w2s1_pixel_format;
+static int hf_egfx_w2s1_dest_rectLeft;
+static int hf_egfx_w2s1_dest_rectTop;
+static int hf_egfx_w2s1_dest_rectRight;
+static int hf_egfx_w2s1_dest_rectBottom;
+static int hf_egfx_w2s1_bitmap_data_size;
+
+static int hf_egfx_w2s2_surface_id;
+static int hf_egfx_w2s2_codec_id;
+static int hf_egfx_w2s2_codec_context_id;
+static int hf_egfx_w2s2_pixel_format;
+static int hf_egfx_w2s2_bitmap_data_size;
 
 static int hf_egfx_ack_queue_depth;
 static int hf_egfx_ack_frame_id;
@@ -80,6 +94,9 @@ static int ett_egfx_ackqoe;
 static int ett_egfx_reset;
 static int ett_egfx_monitors;
 static int ett_egfx_monitordef;
+static int ett_egfx_w2s1;
+static int ett_egfx_w2s1_rect;
+static int ett_egfx_w2s2;
 
 
 static expert_field ei_egfx_pdulen_invalid;
@@ -490,13 +507,61 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 			col_append_sep_str(pinfo->cinfo, COL_INFO, ",", "Map Surface To Output");
 			break;
 
-		case RDPGFX_CMDID_WIRETOSURFACE_1:
+		case RDPGFX_CMDID_WIRETOSURFACE_1: {
 			col_append_sep_str(pinfo->cinfo, COL_INFO, ",", "Wire To Surface 1");
-			break;
 
-		case RDPGFX_CMDID_WIRETOSURFACE_2:
-			col_append_sep_str(pinfo->cinfo, COL_INFO, ",", "Wire To Surface 2");
+			subtree = proto_tree_add_subtree(tree, tvb, offset, pduLength-8, ett_egfx_w2s1, NULL, "Wire To Surface 1");
+			proto_tree_add_item(subtree, hf_egfx_w2s1_surface_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s1_codec_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s1_pixel_format, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+			offset += 1;
+
+			proto_item *dest_rect_tree;
+			dest_rect_tree = proto_tree_add_subtree(subtree, tvb, offset, 8, ett_egfx_w2s1_rect, NULL, "Target rect");
+
+			proto_tree_add_item(dest_rect_tree, hf_egfx_w2s1_dest_rectLeft, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(dest_rect_tree, hf_egfx_w2s1_dest_rectTop, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(dest_rect_tree, hf_egfx_w2s1_dest_rectRight, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(dest_rect_tree, hf_egfx_w2s1_dest_rectBottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s1_bitmap_data_size, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+			offset += 4;
+
 			break;
+		}
+
+		case RDPGFX_CMDID_WIRETOSURFACE_2: {
+			col_append_sep_str(pinfo->cinfo, COL_INFO, ",", "Wire To Surface 2");
+
+			subtree = proto_tree_add_subtree(tree, tvb, offset, pduLength-8, ett_egfx_w2s2, NULL, "Wire To Surface 2");
+			proto_tree_add_item(subtree, hf_egfx_w2s2_surface_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s2_codec_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+			offset += 2;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s2_codec_context_id, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+			offset += 4;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s2_pixel_format, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+			offset += 1;
+
+			proto_tree_add_item(subtree, hf_egfx_w2s2_bitmap_data_size, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+			offset += 4;
+
+			break;
+		}
 
 		case RDPGFX_CMDID_DELETEENCODINGCONTEXT:
 			col_append_sep_str(pinfo->cinfo, COL_INFO, ",", "Delete Encoding Context");
@@ -754,6 +819,71 @@ void proto_register_rdp_egfx(void) {
 			FT_FRAMENUM, BASE_NONE, FRAMENUM_TYPE(FT_FRAMENUM_RESPONSE), 0x0,
 			NULL, HFILL }
 		},
+		{ &hf_egfx_w2s1_surface_id,
+		  { "Surface ID", "rdp_egfx.w2s1.surfaceid",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_codec_id,
+		  { "Codec ID", "rdp_egfx.w2s1.codecid",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_pixel_format,
+		  { "Pixel format", "rdp_egfx.w2s1.pixelfmt",
+			FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_dest_rectLeft,
+		  { "Left", "rdp_egfx.w2s1.targetrect.left",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_dest_rectTop,
+		  { "Top", "rdp_egfx.w2s1.targetrect.top",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_dest_rectRight,
+		  { "Right", "rdp_egfx.w2s1.targetrect.right",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_dest_rectBottom,
+		  { "Bottom", "rdp_egfx.w2s1.targetrect.bottom",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_size,
+		  { "Bitmap data size", "rdp_egfx.w2s1.bitmapsize",
+			FT_UINT32, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_surface_id,
+		  { "Surface ID", "rdp_egfx.w2s2.surfaceid",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_codec_id,
+		  { "Codec ID", "rdp_egfx.w2s2.codecid",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_codec_context_id,
+		  { "Codec context ID", "rdp_egfx.w2s2.codeccontextid",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_pixel_format,
+		  { "Pixel format", "rdp_egfx.w2s2.pixelfmt",
+			FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_bitmap_data_size,
+		  { "Bitmap data size", "rdp_egfx.w2s2.bitmapsize",
+			FT_UINT32, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
 	};
 
 	static int *ett[] = {
@@ -767,6 +897,9 @@ void proto_register_rdp_egfx(void) {
 		&ett_egfx_capsconfirm,
 		&ett_egfx_monitors,
 		&ett_egfx_monitordef,
+		&ett_egfx_w2s1,
+		&ett_egfx_w2s1_rect,
+		&ett_egfx_w2s2,
 	};
 
 	static ei_register_info ei[] = {
