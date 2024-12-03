@@ -505,12 +505,26 @@ static int hf_rdp_fastpathOrdersAltSecWindowID;
 static int hf_rdp_fastpathOrdersAltSecOwnerWindowID;
 static int hf_rdp_fastpathOrdersAltSecWindowStyle;
 static int hf_rdp_fastpathOrdersAltSecWindowExStyle;
+
+#define SHOW_STATE_DONT_SHOW  0x00
+#define SHOW_STATE_MINIMIZED  0x02
+#define SHOW_STATE_MAXIMIZED  0x03
+#define SHOW_STATE_CURRENT    0x05
+
+static const value_string show_state_vals[] = {
+  { SHOW_STATE_DONT_SHOW, "Do not show the window" },  
+  { SHOW_STATE_MINIMIZED, "Show the window minimized" }, 
+  { SHOW_STATE_MAXIMIZED, "Show the window maximized" }, 
+  { SHOW_STATE_CURRENT,   "Show the window in its current size and position" },
+  { 0, NULL }
+};
 static int hf_rdp_fastpathOrdersAltSecWindowShow;
+
 static int hf_rdp_fastpathOrdersAltSecWindowTitle;
 static int hf_rdp_fastpathOrdersAltSecWindowClientOffsetX;
 static int hf_rdp_fastpathOrdersAltSecWindowClientOffsetY;
 static int hf_rdp_fastpathOrdersAltSecWindowClientAreaWidth;
-static int hf_rdp_fastpathOrdersAltSecWindowClientAreaHight;
+static int hf_rdp_fastpathOrdersAltSecWindowClientAreaHeight;
 static int hf_rdp_fastpathOrdersAltSecWindowResizeMarginLeft;
 static int hf_rdp_fastpathOrdersAltSecWindowResizeMarginRight;
 static int hf_rdp_fastpathOrdersAltSecWindowResizeMarginTop;
@@ -521,6 +535,40 @@ static int hf_rdp_fastpathOrdersAltSecWindowOffsetX;
 static int hf_rdp_fastpathOrdersAltSecWindowOffsetY;
 static int hf_rdp_fastpathOrdersAltSecWindowClientDeltaX;
 static int hf_rdp_fastpathOrdersAltSecWindowClientDeltaY;
+static int hf_rdp_fastpathOrdersAltSecWindowWidth;
+static int hf_rdp_fastpathOrdersAltSecWindowHeight;
+static int hf_rdp_fastpathOrdersAltSecWindowNumRects;
+static int hf_rdp_fastpathOrdersAltSecWindowRect;
+static int hf_rdp_fastpathOrdersAltSecWindowRectLeft;
+static int hf_rdp_fastpathOrdersAltSecWindowRectTop;
+static int hf_rdp_fastpathOrdersAltSecWindowRectRight;
+static int hf_rdp_fastpathOrdersAltSecWindowRectBottom;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetX;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetY;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityRect;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityRectLeft;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityRectTop;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityRectRight;
+static int hf_rdp_fastpathOrdersAltSecWindowVisibilityRectBottom;
+static int hf_rdp_fastpathOrdersAltSecWindowOverlayDescription;
+static int hf_rdp_fastpathOrdersAltSecWindowTaskBarButton;
+static int hf_rdp_fastpathOrdersAltSecWindowEnforceServerZorder;
+static int hf_rdp_fastpathOrdersAltSecWindowAppBarState;
+
+#define EDGE_ANCHOR_LEFT    0x00
+#define EDGE_ANCHOR_TOP     0x01
+#define EDGE_ANCHOR_RIGHT   0x02
+#define EDGE_ANCHOR_BOTTOM  0x03
+
+static const value_string appbar_edge_vals[] = {
+  { EDGE_ANCHOR_LEFT,   "Anchor to the left edge" },
+  { EDGE_ANCHOR_TOP,    "Anchor to the top edge" },
+  { EDGE_ANCHOR_RIGHT,  "Anchor to the right edge" },
+  { EDGE_ANCHOR_BOTTOM, "Anchor to the bottom edge" },
+  { 0, NULL }
+};
+static int hf_rdp_fastpathOrdersAltSecWindowAppBarEdge;
 
 // [MS-RDPERP] 2.2.1.3.1.2.1 New or Existing Window
 static int hf_rdp_fastpathOrdersAltSecWindowOrderFieldType;
@@ -3642,7 +3690,12 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
 
                       if (fields & 0x00000010)
                       {
-                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowShow, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        uint8_t show = tvb_get_uint8(tvb, offset);
+                        item = proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowShow, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        if (show == 0x01 || show == 0x04 || show > SHOW_STATE_CURRENT)
+                        {
+                          proto_item_append_text(item, " - Invalid");
+                        }
                         offset++;
                       }
 
@@ -3664,7 +3717,7 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
                       {
                         proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowClientAreaWidth, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                         offset += 4;
-                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowClientAreaHight, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowClientAreaHeight, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                         offset += 4;
                       }
 
@@ -3710,6 +3763,105 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
                         offset += 4;
                         proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowClientDeltaY, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                         offset += 4;
+                      }
+
+                      if (fields & 0x00000400)
+                      {
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowWidth, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                        offset += 4;
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowHeight, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                        offset += 4;
+                      }
+
+                      if (fields & 0x00000100)
+                      {
+                        uint32_t rects = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
+                        proto_tree *rects_tree;
+                        rects_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2, hf_rdp_fastpathOrdersAltSecWindowNumRects, NULL, "Rects");
+                        offset += 2;
+
+                        for(uint32_t rectx = 0; rectx < rects; rectx++)
+                        {
+                          proto_tree *rect_tree;
+                          rect_tree = proto_tree_add_subtree(rects_tree, tvb, offset, 8, hf_rdp_fastpathOrdersAltSecWindowRect, NULL, NULL);
+	                        proto_item_set_text(rect_tree, "Rect %d", rectx + 1);
+
+                          proto_tree_add_item(rect_tree, hf_rdp_fastpathOrdersAltSecWindowRectLeft, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rect_tree, hf_rdp_fastpathOrdersAltSecWindowRectTop, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rect_tree, hf_rdp_fastpathOrdersAltSecWindowRectRight, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rect_tree, hf_rdp_fastpathOrdersAltSecWindowRectBottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                        }
+                      }
+
+                      if (fields & 0x00001000)
+                      {
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetX, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                        offset += 4;
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetY, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                        offset += 4;
+                      }
+
+                      if (fields & 0x00000200)
+                      {
+                        uint32_t rects = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
+                        proto_tree *visibility_tree;
+                        visibility_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2, hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects, NULL, "Visibility rects");
+                        offset += 2;
+
+                        for(uint32_t rectx = 0; rectx < rects; rectx++)
+                        {
+                          proto_tree *rects_tree;
+                          rects_tree = proto_tree_add_subtree(visibility_tree, tvb, offset, 8, hf_rdp_fastpathOrdersAltSecWindowVisibilityRect, NULL, NULL);
+	                        proto_item_set_text(rects_tree, "Rect %d", rectx + 1);
+
+                          proto_tree_add_item(rects_tree, hf_rdp_fastpathOrdersAltSecWindowVisibilityRectLeft, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rects_tree, hf_rdp_fastpathOrdersAltSecWindowVisibilityRectTop, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rects_tree, hf_rdp_fastpathOrdersAltSecWindowVisibilityRectRight, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                          proto_tree_add_item(rects_tree, hf_rdp_fastpathOrdersAltSecWindowVisibilityRectBottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                          offset += 2;
+                        }
+                      }
+
+                      if (fields & 0x00400000)
+                      {
+                        proto_tree_add_item_ret_length(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowOverlayDescription, tvb, offset, 2, ENC_LITTLE_ENDIAN | ENC_UTF_16, &str_len);
+                        offset += str_len;
+                      }
+
+                      if (fields & 0x00800000)
+                      {
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowTaskBarButton, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        offset++;
+                      }
+
+                      if (fields & 0x00080000)
+                      {
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowEnforceServerZorder, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        offset++;
+                      }
+
+                      if (fields & 0x00000040)
+                      {
+                        proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowAppBarState, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        offset++;
+                      }
+
+                      if (fields & 0x00000001)
+                      {
+                        uint8_t edge = tvb_get_uint8(tvb, offset);
+                        item = proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowAppBarEdge, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                        if (edge > EDGE_ANCHOR_BOTTOM)
+                        {
+                          proto_item_append_text(item, " - Invalid");
+                        }
+                        offset++;
                       }
                     }
                   }
@@ -5406,108 +5558,108 @@ proto_register_rdp(void) {
             FT_UINT8, BASE_DEC, NULL, 0x00,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldType,
-      { "Window Order type", "rdp.fastpath.orders.altsec.window.ordertype",
+      { "Window Order type", "rdp.fastpath.orders.altsec.window.field.ordertype",
             FT_UINT32, BASE_HEX, NULL, 0x01000000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldStateNew,
-      { "State new", "rdp.fastpath.orders.altsec.window.statenew",
+      { "State new", "rdp.fastpath.orders.altsec.window.field.statenew",
             FT_UINT32, BASE_HEX, NULL, 0x10000000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldOwner,
-      { "Owner", "rdp.fastpath.orders.altsec.window.owner",
+      { "Owner", "rdp.fastpath.orders.altsec.window.field.owner",
             FT_UINT32, BASE_HEX, NULL, 0x00000002,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldStyle,
-      { "Style", "rdp.fastpath.orders.altsec.window.style",
+      { "Style", "rdp.fastpath.orders.altsec.window.field.style",
             FT_UINT32, BASE_HEX, NULL, 0x00000008,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldShow,
-      { "Show", "rdp.fastpath.orders.altsec.window.show",
+      { "Show", "rdp.fastpath.orders.altsec.window.field.show",
             FT_UINT32, BASE_HEX, NULL, 0x00000010,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldTitle,
-      { "Title", "rdp.fastpath.orders.altsec.window.title",
+      { "Title", "rdp.fastpath.orders.altsec.window.field.title",
             FT_UINT32, BASE_HEX, NULL, 0x00000004,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldClientAreaOffset,
-      { "Client area offset", "rdp.fastpath.orders.altsec.window.caoffset",
+      { "Client area offset", "rdp.fastpath.orders.altsec.window.field.caoffset",
             FT_UINT32, BASE_HEX, NULL, 0x00004000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldClientAreaSize,
-      { "Client area size", "rdp.fastpath.orders.altsec.window.casize",
+      { "Client area size", "rdp.fastpath.orders.altsec.window.field.casize",
             FT_UINT32, BASE_HEX, NULL, 0x00010000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldResizeMarginX,
-      { "Margin X", "rdp.fastpath.orders.altsec.window.marginx",
+      { "Margin X", "rdp.fastpath.orders.altsec.window.field.marginx",
             FT_UINT32, BASE_HEX, NULL, 0x00000080,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldResizeMarginY,
-      { "Margin Y", "rdp.fastpath.orders.altsec.window.marginy",
+      { "Margin Y", "rdp.fastpath.orders.altsec.window.field.marginy",
             FT_UINT32, BASE_HEX, NULL, 0x08000000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldRPContent,
-      { "RP", "rdp.fastpath.orders.altsec.window.rp",
+      { "RP", "rdp.fastpath.orders.altsec.window.field.rp",
             FT_UINT32, BASE_HEX, NULL, 0x00020000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldRootParent,
-      { "Root", "rdp.fastpath.orders.altsec.window.root",
+      { "Root", "rdp.fastpath.orders.altsec.window.field.root",
             FT_UINT32, BASE_HEX, NULL, 0x00040000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldOffset,
-      { "Offset", "rdp.fastpath.orders.altsec.window.offset",
+      { "Offset", "rdp.fastpath.orders.altsec.window.field.offset",
             FT_UINT32, BASE_HEX, NULL, 0x00000800,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldClientDelta,
-      { "Client delta", "rdp.fastpath.orders.altsec.window.cdelta",
+      { "Client delta", "rdp.fastpath.orders.altsec.window.field.cdelta",
             FT_UINT32, BASE_HEX, NULL, 0x00008000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldSize,
-      { "Size", "rdp.fastpath.orders.altsec.window.size",
+      { "Size", "rdp.fastpath.orders.altsec.window.field.size",
             FT_UINT32, BASE_HEX, NULL, 0x00000400,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldRects,
-      { "Rects", "rdp.fastpath.orders.altsec.window.rects",
+      { "Rects", "rdp.fastpath.orders.altsec.window.field.rects",
             FT_UINT32, BASE_HEX, NULL, 0x00000100,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldVisibleOffset,
-      { "Visible offset", "rdp.fastpath.orders.altsec.window.voffset",
+      { "Visible offset", "rdp.fastpath.orders.altsec.window.field.voffset",
             FT_UINT32, BASE_HEX, NULL, 0x00001000,
             NULL, HFILL }},
-    { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldVisibility,
-      { "Visibility", "rdp.fastpath.orders.altsec.window.visible",
+      { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldVisibility,
+        { "Visibility", "rdp.fastpath.orders.altsec.window.field.visibility",
             FT_UINT32, BASE_HEX, NULL, 0x00000200,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldOverlayDescription,
-      { "Overlay Desc.", "rdp.fastpath.orders.altsec.window.odesc",
-            FT_UINT32, BASE_HEX, NULL, 0x00400000,
+      { "Overlay Desc.", "rdp.fastpath.orders.altsec.window.field.odesc",
+              FT_UINT32, BASE_HEX, NULL, 0x00400000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldIconOverlayNull,
-      { "Avoid Icon Overlay", "rdp.fastpath.orders.altsec.window.avoidoicon",
+      { "Avoid Icon Overlay", "rdp.fastpath.orders.altsec.window.field.avoidoicon",
             FT_UINT32, BASE_HEX, NULL, 0x00200000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldTaskbarButton,
-      { "Taskbar button", "rdp.fastpath.orders.altsec.window.taskbarbutton",
+      { "Taskbar button", "rdp.fastpath.orders.altsec.window.field.taskbarbutton",
             FT_UINT32, BASE_HEX, NULL, 0x00800000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldEnforceServerZorder,
-      { "Server zorder", "rdp.fastpath.orders.altsec.window.zorder",
+      { "Server zorder", "rdp.fastpath.orders.altsec.window.field.zorder",
             FT_UINT32, BASE_HEX, NULL, 0x00080000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldAppbarState,
-      { "Appbar state", "rdp.fastpath.orders.altsec.window.appstate",
+      { "Appbar state", "rdp.fastpath.orders.altsec.window.field.appstate",
             FT_UINT32, BASE_HEX, NULL, 0x00000040,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldAppbarEdge,
-      { "Appbar edge", "rdp.fastpath.orders.altsec.window.appedge",
+      { "Appbar edge", "rdp.fastpath.orders.altsec.window.field.appedge",
             FT_UINT32, BASE_HEX, NULL, 0x00000001,
             NULL, HFILL }},
 
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldIconBig,
-      { "Big icon", "rdp.fastpath.orders.altsec.window.bigicon",
+      { "Big icon", "rdp.fastpath.orders.altsec.window.field.bigicon",
             FT_UINT32, BASE_HEX, NULL, 0x00002000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldIconOverlay,
-      { "Icon overlay", "rdp.fastpath.orders.altsec.window.overlayicon",
+      { "Icon overlay", "rdp.fastpath.orders.altsec.window.field.overlayicon",
             FT_UINT32, BASE_HEX, NULL, 0x00100000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowID,
@@ -5528,43 +5680,43 @@ proto_register_rdp(void) {
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowShow,
       { "Show", "rdp.fastpath.orders.altsec.window.show",
-            FT_UINT8, BASE_HEX, NULL, 0x00,
+            FT_UINT8, BASE_HEX, VALS(show_state_vals), 0x00,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowTitle,
       { "Title", "rdp.fastpath.orders.altsec.window.title",
         FT_UINT_STRING, BASE_NONE, NULL, 0x0,
-        "Reply Device Type Name", HFILL }},
+            NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientOffsetX,
       { "Client offset X", "rdp.fastpath.orders.altsec.window.client.offset.x",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientOffsetY,
       { "Client offset Y", "rdp.fastpath.orders.altsec.window.client.offset.y",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientAreaWidth,
       { "Client area width", "rdp.fastpath.orders.altsec.window.client.area.width",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
-    { &hf_rdp_fastpathOrdersAltSecWindowClientAreaHight,
+    { &hf_rdp_fastpathOrdersAltSecWindowClientAreaHeight,
       { "Client area height", "rdp.fastpath.orders.altsec.window.client.area.height",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowResizeMarginLeft,
       { "Resize margin left", "rdp.fastpath.orders.altsec.window.resize.margin.left",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowResizeMarginRight,
       { "Resize margin right", "rdp.fastpath.orders.altsec.window.resize.margin.right",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowResizeMarginTop,
       { "Resize margin top", "rdp.fastpath.orders.altsec.window.resize.margin.top",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowResizeMarginBottom,
       { "Resize margin bottom", "rdp.fastpath.orders.altsec.window.resize.margin.bottom",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowRPContent,
       { "RP content", "rdp.fastpath.orders.altsec.window.rpcontent",
@@ -5576,19 +5728,87 @@ proto_register_rdp(void) {
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOffsetX,
       { "Offset X", "rdp.fastpath.orders.altsec.window.offset.x",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOffsetY,
       { "Offset Y", "rdp.fastpath.orders.altsec.window.offset.y",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientDeltaX,
       { "Client delta X", "rdp.fastpath.orders.altsec.window.client.delta.x",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientDeltaY,
       { "Client delta Y", "rdp.fastpath.orders.altsec.window.client.delta.y",
-        FT_UINT32, BASE_HEX, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowWidth,
+      { "Width", "rdp.fastpath.orders.altsec.window.width",
+        FT_UINT32, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowHeight,
+      { "Height", "rdp.fastpath.orders.altsec.window.height",
+        FT_UINT32, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowRectLeft,
+      { "Left", "rdp.fastpath.orders.altsec.window.rect.left",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowRectTop,
+      { "Top", "rdp.fastpath.orders.altsec.window.rect.top",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowRectRight,
+      { "Right", "rdp.fastpath.orders.altsec.window.rect.right",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowRectBottom,
+      { "Bottom", "rdp.fastpath.orders.altsec.window.rect.bottom",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetX,
+      { "Visible offset X", "rdp.fastpath.orders.altsec.window.visible.offset.x",
+        FT_UINT32, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetY,
+      { "Visible offset Y", "rdp.fastpath.orders.altsec.window.visible.offset.y",
+        FT_UINT32, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibilityRectLeft,
+      { "Left", "rdp.fastpath.orders.altsec.window.visibility.rect.left",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibilityRectTop,
+      { "Top", "rdp.fastpath.orders.altsec.window.visibility.rect.top",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibilityRectRight,
+      { "Right", "rdp.fastpath.orders.altsec.window.visibility.rect.right",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowVisibilityRectBottom,
+      { "Bottom", "rdp.fastpath.orders.altsec.window.visibility.rect.bottom",
+        FT_UINT16, BASE_DEC, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowOverlayDescription,
+      { "Overlay", "rdp.fastpath.orders.altsec.window.overlay",
+        FT_UINT_STRING, BASE_NONE, NULL, 0x0,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowTaskBarButton,
+      { "TaskBar button", "rdp.fastpath.orders.altsec.window.taskbarbutton",
+        FT_BOOLEAN, 8, NULL, 0x00,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowEnforceServerZorder,
+      { "Enforce server Z-order", "rdp.fastpath.orders.altsec.window.enforcezorder",
+        FT_BOOLEAN, 8, NULL, 0x00,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowAppBarState,
+      { "AppBar state", "rdp.fastpath.orders.altsec.window.appbarstate",
+        FT_BOOLEAN, 8, NULL, 0x00,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowAppBarEdge,
+      { "AppBar edge", "rdp.fastpath.orders.altsec.window.appbaredge",
+        FT_UINT8, BASE_HEX, VALS(appbar_edge_vals), 0x00,
             NULL, HFILL }},
   };
 
@@ -5651,6 +5871,10 @@ proto_register_rdp(void) {
     &ett_rdp_fastpath_compression,
     &ett_rdp_fastpath_orders_altsec,
     &hf_rdp_fastpathOrdersAltSecWindowFieldPresentFlags,
+    &hf_rdp_fastpathOrdersAltSecWindowNumRects,
+    &hf_rdp_fastpathOrdersAltSecWindowRect,
+    &hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects,
+    &hf_rdp_fastpathOrdersAltSecWindowVisibilityRect,
   };
   static ei_register_info ei[] = {
      { &ei_rdp_neg_len_invalid, { "rdp.neg_len.invalid", PI_PROTOCOL, PI_ERROR, "Invalid length", EXPFILL }},
