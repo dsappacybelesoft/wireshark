@@ -87,6 +87,11 @@ static int hf_rail_activate_enabled;
 static int hf_rail_sysparam_server_params;
 static int hf_rail_sysparam_client_params;
 
+static int hf_rail_sysparam_client_params_spi_setworkarea_left;
+static int hf_rail_sysparam_client_params_spi_setworkarea_top;
+static int hf_rail_sysparam_client_params_spi_setworkarea_right;
+static int hf_rail_sysparam_client_params_spi_setworkarea_bottom;
+
 static int ett_rdp_rail;
 static int ett_rdp_rail_handshake_flags;
 static int ett_rdp_rail_clientstatus_flags;
@@ -328,13 +333,25 @@ dissect_rdp_rail(tvbuff_t *tvb _U_, packet_info *pinfo, proto_tree *parent_tree 
 			uint32_t clientParam;
 
 			proto_tree_add_item_ret_uint(tree, hf_rail_sysparam_client_params, tvb, offset, 4, ENC_LITTLE_ENDIAN, &clientParam);
+            offset += 4;
 			col_append_fstr(pinfo->cinfo, COL_INFO, "|%s", val_to_str_const(clientParam, rdp_rail_client_system_params_vals, "<unknown client param>"));
 
 			switch(clientParam) {
 			case SPI_SETDRAGFULLWINDOWS:
 			case SPI_SETKEYBOARDCUES:
 			case SPI_SETKEYBOARDPREF:
-			case SPI_SETWORKAREA:
+				break;
+			case SPI_SETWORKAREA: {
+                	proto_tree_add_item(tree, hf_rail_sysparam_client_params_spi_setworkarea_left, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                	offset += 2;
+                	proto_tree_add_item(tree, hf_rail_sysparam_client_params_spi_setworkarea_top, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                	offset += 2;
+                	proto_tree_add_item(tree, hf_rail_sysparam_client_params_spi_setworkarea_right, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                	offset += 2;
+                	proto_tree_add_item(tree, hf_rail_sysparam_client_params_spi_setworkarea_bottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+                	offset += 2;
+				break;
+				}
 			case RAIL_SPI_DISPLAYCHANGE:
 			case SPI_SETMOUSEBUTTONSWAP:
 			case RAIL_SPI_TASKBARPOS:
@@ -669,6 +686,26 @@ void proto_register_rdp_rail(void) {
 		{ &hf_rail_sysparam_client_params,
 		  { "SystemParameter", "rdp_rail.sysparam.clientparameter",
 			FT_UINT32, BASE_HEX, VALS(rdp_rail_client_system_params_vals), 0x0,
+			NULL, HFILL }},
+
+		{ &hf_rail_sysparam_client_params_spi_setworkarea_left,
+		  { "Left", "rdp_rail.sysparam.clientparameter.spi_setworkarea.left",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }},
+
+		{ &hf_rail_sysparam_client_params_spi_setworkarea_top,
+		  { "Top", "rdp_rail.sysparam.clientparameter.spi_setworkarea.top",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }},
+
+		{ &hf_rail_sysparam_client_params_spi_setworkarea_right,
+		  { "Right", "rdp_rail.sysparam.clientparameter.spi_setworkarea.right",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }},
+
+		{ &hf_rail_sysparam_client_params_spi_setworkarea_bottom,
+		  { "Bottom", "rdp_rail.sysparam.clientparameter.spi_setworkarea.bottom",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
 			NULL, HFILL }},
 
 

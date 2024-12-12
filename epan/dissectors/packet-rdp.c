@@ -3561,7 +3561,8 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
 		  }
 
 		  col_append_sep_str(pinfo->cinfo, COL_INFO, ",", event_name);
-		  event_tree = proto_tree_add_subtree(tree, tvb, offset, eventSize, ett_rdp_fastpath, NULL, event_name);
+      // 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
+		  event_tree = proto_tree_add_subtree(tree, tvb, offset, eventSize + 2, ett_rdp_fastpath, NULL, event_name);
 		  proto_tree_add_item(event_tree, hf_rdp_fastpathServerUpdateCode, tvb, offset, 1, ENC_LITTLE_ENDIAN);
 		  proto_tree_add_item(event_tree, hf_rdp_fastpathServerFragmentation, tvb, offset, 1, ENC_LITTLE_ENDIAN);
 		  proto_tree_add_item(event_tree, hf_rdp_fastpathServerCompression, tvb, offset, 1, ENC_LITTLE_ENDIAN);
@@ -3607,10 +3608,11 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
 
               switch(order_type) {
                 case FASTPATH_UPDATETYPE_ORDERS_ALTSEC_WINDOW_ORDER: {
-                  altsec_tree = proto_tree_add_subtree(event_tree, tvb, offset, 1, ett_rdp_fastpath_orders_altsec, NULL, "AltSec Window (TS_ALTSEC_WINDOW)");
+                  int orderSize = tvb_get_uint16(tvb, offset + 1, ENC_LITTLE_ENDIAN);
+
+                  altsec_tree = proto_tree_add_subtree(event_tree, tvb, offset, orderSize + 1, ett_rdp_fastpath_orders_altsec, NULL, "AltSec Window (TS_ALTSEC_WINDOW)");
                   offset++;
 
-                  int orderSize = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
                   proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowOrderize, tvb, offset, 2, ENC_LITTLE_ENDIAN);
                   offset += 2;
 
@@ -3777,7 +3779,7 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
                       {
                         uint32_t rects = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
                         proto_tree *rects_tree;
-                        rects_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2, hf_rdp_fastpathOrdersAltSecWindowNumRects, NULL, "Rects");
+                        rects_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2 + rects * 8, hf_rdp_fastpathOrdersAltSecWindowNumRects, NULL, "Rects");
                         offset += 2;
 
                         for(uint32_t rectx = 0; rectx < rects; rectx++)
@@ -3809,7 +3811,7 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
                       {
                         uint32_t rects = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
                         proto_tree *visibility_tree;
-                        visibility_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2, hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects, NULL, "Visibility rects");
+                        visibility_tree = proto_tree_add_subtree(altsec_tree, tvb, offset, 2 + rects * 8, hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects, NULL, "Visibility rects");
                         offset += 2;
 
                         for(uint32_t rectx = 0; rectx < rects; rectx++)
@@ -5558,7 +5560,7 @@ proto_register_rdp(void) {
             FT_UINT8, BASE_DEC, NULL, 0x00,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldType,
-      { "Window Order type", "rdp.fastpath.orders.altsec.window.field.ordertype",
+      { "Window Order type", "rdp.fastpath.orders.altsec.window.field.windowordertype",
             FT_UINT32, BASE_HEX, NULL, 0x01000000,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOrderFieldStateNew,
@@ -5688,11 +5690,11 @@ proto_register_rdp(void) {
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientOffsetX,
       { "Client offset X", "rdp.fastpath.orders.altsec.window.client.offset.x",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientOffsetY,
       { "Client offset Y", "rdp.fastpath.orders.altsec.window.client.offset.y",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientAreaWidth,
       { "Client area width", "rdp.fastpath.orders.altsec.window.client.area.width",
@@ -5728,19 +5730,19 @@ proto_register_rdp(void) {
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOffsetX,
       { "Offset X", "rdp.fastpath.orders.altsec.window.offset.x",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowOffsetY,
       { "Offset Y", "rdp.fastpath.orders.altsec.window.offset.y",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientDeltaX,
       { "Client delta X", "rdp.fastpath.orders.altsec.window.client.delta.x",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowClientDeltaY,
       { "Client delta Y", "rdp.fastpath.orders.altsec.window.client.delta.y",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowWidth,
       { "Width", "rdp.fastpath.orders.altsec.window.width",
@@ -5768,11 +5770,11 @@ proto_register_rdp(void) {
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetX,
       { "Visible offset X", "rdp.fastpath.orders.altsec.window.visible.offset.x",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowVisibleOffsetY,
       { "Visible offset Y", "rdp.fastpath.orders.altsec.window.visible.offset.y",
-        FT_UINT32, BASE_DEC, NULL, 0x0,
+        FT_INT32, BASE_DEC, NULL, 0x0,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowVisibilityRectLeft,
       { "Left", "rdp.fastpath.orders.altsec.window.visibility.rect.left",
