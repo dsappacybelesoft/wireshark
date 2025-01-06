@@ -56,12 +56,46 @@ static int hf_egfx_w2s1_dest_rectTop;
 static int hf_egfx_w2s1_dest_rectRight;
 static int hf_egfx_w2s1_dest_rectBottom;
 static int hf_egfx_w2s1_bitmap_data_size;
+static int hf_egfx_w2s1_bitmap_data_planar_header_cll;
+static int hf_egfx_w2s1_bitmap_data_planar_header_cs;
+static int hf_egfx_w2s1_bitmap_data_planar_header_rle;
+static int hf_egfx_w2s1_bitmap_data_planar_header_na;
+static int hf_egfx_w2s1_bitmap_data_clear_flag_glyph_index;
+static int hf_egfx_w2s1_bitmap_data_clear_flag_glyph_hit;
+static int hf_egfx_w2s1_bitmap_data_clear_flag_cache_reset;
+static int hf_egfx_w2s1_bitmap_data_clear_seq_num;
+static int hf_egfx_w2s1_bitmap_data_clear_glyph_index;
+static int hf_egfx_w2s1_bitmap_data_clear_composite_payload;
 
 static int hf_egfx_w2s2_surface_id;
 static int hf_egfx_w2s2_codec_id;
 static int hf_egfx_w2s2_codec_context_id;
 static int hf_egfx_w2s2_pixel_format;
 static int hf_egfx_w2s2_bitmap_data_size;
+static int hf_egfx_w2s2_progressive_block_type;
+static int hf_egfx_w2s2_progressive_block_len;
+static int hf_egfx_w2s2_progressive_sync_magic;
+static int hf_egfx_w2s2_progressive_sync_version;
+static int hf_egfx_w2s2_progressive_frame_index;
+static int hf_egfx_w2s2_progressive_frame_reg_count;
+static int hf_egfx_w2s2_progressive_ctx_context_id;
+static int hf_egfx_w2s2_progressive_ctx_tile_size;
+static int hf_egfx_w2s2_progressive_ctx_flags;
+static int hf_egfx_w2s2_progressive_region_tile_size;
+static int hf_egfx_w2s2_progressive_region_num_rects;
+static int hf_egfx_w2s2_progressive_region_num_quant;
+static int hf_egfx_w2s2_progressive_region_num_prog_quant;
+static int hf_egfx_w2s2_progressive_region_flags;
+static int hf_egfx_w2s2_progressive_region_num_tiles;
+static int hf_egfx_w2s2_progressive_region_tiles_data_size;
+static int hf_egfx_w2s2_progressive_region_rect_x;
+static int hf_egfx_w2s2_progressive_region_rect_y;
+static int hf_egfx_w2s2_progressive_region_rect_width;
+static int hf_egfx_w2s2_progressive_region_rect_height;
+static int hf_egfx_w2s2_progressive_region_tile_ydata;
+static int hf_egfx_w2s2_progressive_region_tile_cbdata;
+static int hf_egfx_w2s2_progressive_region_tile_crdata;
+static int hf_egfx_w2s2_progressive_region_tile_data;
 
 static int hf_egfx_ack_queue_depth;
 static int hf_egfx_ack_frame_id;
@@ -96,7 +130,15 @@ static int ett_egfx_monitors;
 static int ett_egfx_monitordef;
 static int ett_egfx_w2s1;
 static int ett_egfx_w2s1_rect;
+static int ett_egfx_w2s1_bitmap;
+static int ett_egfx_w2s1_composite_payload;
 static int ett_egfx_w2s2;
+static int ett_egfx_w2s2_bitmap;
+static int ett_egfx_w2s2_block;
+static int ett_egfx_w2s2_region_rects;
+static int ett_egfx_w2s2_region_quants;
+static int ett_egfx_w2s2_region_prog_quants;
+static int ett_egfx_w2s2_region_tiles;
 
 
 static expert_field ei_egfx_pdulen_invalid;
@@ -147,6 +189,43 @@ enum {
 	RDPGFX_CAPVERSION_107 = 0x000A0701
 };
 
+enum {
+	RDPGFX_CODECID_UNCOMPRESSED = 0x0000,
+	RDPGFX_CODECID_CAVIDEO = 0x0003,
+	RDPGFX_CODECID_CLEARCODEC = 0x0008,
+	RDPGFX_CODECID_CAPROGRESSIVE = 0x0009,
+	RDPGFX_CODECID_PLANAR = 0x000A,
+	RDPGFX_CODECID_AVC420 = 0x000B,
+	RDPGFX_CODECID_ALPHA = 0x000C,
+	RDPGFX_CODECID_AVC444 = 0x000E,
+	RDPGFX_CODECID_AVC444V2 = 0x000F
+};
+
+enum {
+	PLANAR_HEADER_CLL = 0x07,
+	PLANAR_HEADER_CS = 0x08,
+	PLANAR_HEADER_RLE = 0x10,
+	PLANAR_HEADER_NA = 0x20
+};
+
+enum {
+	CLEARCODEC_FLAG_GLYPH_INDEX = 0x01,
+	CLEARCODEC_FLAG_GLYPH_HIT = 0x02,
+	CLEARCODEC_FLAG_CACHE_RESET = 0x04
+
+};
+
+enum {
+	RFX_PROGRESSIVE_SYNC = 0xCCC0,
+	RFX_PROGRESSIVE_FRAME_BEGIN = 0xCCC1,
+	RFX_PROGRESSIVE_FRAME_END = 0xCCC2,
+	RFX_PROGRESSIVE_CONTEXT = 0xCCC3,
+	RFX_PROGRESSIVE_REGION = 0xCCC4,
+	RFX_PROGRESSIVE_TILE_SIMPLE = 0xCCC5,
+	RFX_PROGRESSIVE_TILE_FIRST = 0xCCC6,
+	RFX_PROGRESSIVE_TILE_UPGRADE = 0xCCC7
+};
+
 static const value_string rdp_egfx_cmd_vals[] = {
 	{ RDPGFX_CMDID_WIRETOSURFACE_1, "Wire to surface 1" },
 	{ RDPGFX_CMDID_WIRETOSURFACE_2, "Wire to surface 2" },
@@ -195,6 +274,30 @@ static const value_string rdp_egfx_monitor_flags_vals[] = {
 	{ 0x0, NULL },
 };
 
+static const value_string rdp_egfx_codec_vals[] = {
+	{ RDPGFX_CODECID_UNCOMPRESSED, "Uncompressed" },
+	{ RDPGFX_CODECID_CAVIDEO, "RemoteFX" },
+	{ RDPGFX_CODECID_CLEARCODEC, "Clear" },
+	{ RDPGFX_CODECID_CAPROGRESSIVE, "Progressive" },
+	{ RDPGFX_CODECID_PLANAR, "Planar" },
+	{ RDPGFX_CODECID_AVC420, "AVC420" },
+	{ RDPGFX_CODECID_ALPHA, "Alpha" },
+	{ RDPGFX_CODECID_AVC444, "AVC444" },
+	{ RDPGFX_CODECID_AVC444V2, "AVC444V2" },
+	{ 0x0, NULL },
+};
+
+static const value_string rdp_egfx_progressive_block_types_vals[] = {
+	{ RFX_PROGRESSIVE_SYNC, "WBT_SYNC" },
+	{ RFX_PROGRESSIVE_FRAME_BEGIN, "WBT_FRAME_BEGIN" },
+	{ RFX_PROGRESSIVE_FRAME_END, "WBT_FRAME_END" },
+	{ RFX_PROGRESSIVE_CONTEXT, "WBT_CONTEXT" },
+	{ RFX_PROGRESSIVE_REGION, "WBT_REGION" },
+	{ RFX_PROGRESSIVE_TILE_SIMPLE, "WBT_TILE_SIMPLE" },
+	{ RFX_PROGRESSIVE_TILE_FIRST, "WBT_TILE_PROGRESSIVE_FIRST" },
+	{ RFX_PROGRESSIVE_TILE_UPGRADE, "WBT_TILE_PROGRESSIVE_UPGRADE" },
+	{ 0x0, NULL },
+};
 
 typedef struct {
 	zgfx_context_t *zgfx;
@@ -514,6 +617,7 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 			proto_tree_add_item(subtree, hf_egfx_w2s1_surface_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 			offset += 2;
 
+			uint16_t codecid = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
 			proto_tree_add_item(subtree, hf_egfx_w2s1_codec_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 			offset += 2;
 
@@ -535,8 +639,47 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 			proto_tree_add_item(dest_rect_tree, hf_egfx_w2s1_dest_rectBottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 			offset += 2;
 
+			uint32_t data_size = tvb_get_uint32(tvb, offset, ENC_LITTLE_ENDIAN);
 			proto_tree_add_item(subtree, hf_egfx_w2s1_bitmap_data_size, tvb, offset, 4, ENC_LITTLE_ENDIAN);
 			offset += 4;
+
+			proto_tree *bitmap_tree;
+			bitmap_tree = proto_tree_add_subtree(subtree, tvb, offset, pduLength-25, ett_egfx_w2s1_bitmap, NULL, "Bitmap data");
+
+			switch (codecid) {
+				case RDPGFX_CODECID_PLANAR: {
+					// uint8_t header = tvb_get_uint8(tvb, offset);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_planar_header_cll, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_planar_header_cs, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_planar_header_rle, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_planar_header_na, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					offset++;
+					break;
+				}
+				case RDPGFX_CODECID_CLEARCODEC: {
+					uint8_t flags = tvb_get_uint8(tvb, offset);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_flag_glyph_index, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_flag_glyph_hit, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_flag_cache_reset, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					offset++;
+
+					proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_seq_num, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+					offset++;
+
+					if (flags & CLEARCODEC_FLAG_GLYPH_INDEX)
+					{
+						proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_glyph_index, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+						offset += 2;
+					}
+					else if (!(flags & CLEARCODEC_FLAG_GLYPH_HIT))
+					{
+						proto_tree *composite_payload_tree;
+						composite_payload_tree = proto_tree_add_subtree(bitmap_tree, tvb, offset, data_size - 2, ett_egfx_w2s1_composite_payload, NULL, "Composite payload");
+						offset += data_size - 2;
+					}
+					break;
+				}
+			}
 
 			break;
 		}
@@ -548,6 +691,7 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 			proto_tree_add_item(subtree, hf_egfx_w2s2_surface_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 			offset += 2;
 
+			uint16_t codecid = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
 			proto_tree_add_item(subtree, hf_egfx_w2s2_codec_id, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 			offset += 2;
 
@@ -557,8 +701,178 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 			proto_tree_add_item(subtree, hf_egfx_w2s2_pixel_format, tvb, offset, 1, ENC_LITTLE_ENDIAN);
 			offset += 1;
 
+			uint32_t bitmap_size = tvb_get_uint32(tvb, offset, ENC_LITTLE_ENDIAN);
 			proto_tree_add_item(subtree, hf_egfx_w2s2_bitmap_data_size, tvb, offset, 4, ENC_LITTLE_ENDIAN);
 			offset += 4;
+
+			proto_tree *bitmap_tree;
+			bitmap_tree = proto_tree_add_subtree(subtree, tvb, offset, pduLength-21, ett_egfx_w2s2_bitmap, NULL, "Bitmap data");
+
+			int block_count = 0;
+			switch (codecid) {
+				case RDPGFX_CODECID_CAPROGRESSIVE: {
+					while(bitmap_size) {
+						proto_tree *block_tree = proto_tree_add_subtree(bitmap_tree, tvb, offset, 6, ett_egfx_w2s2_block, NULL, NULL);
+
+						uint16_t block_type = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
+						proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_block_type, tvb, offset, 2, ENC_LITTLE_ENDIAN);
+
+						uint32_t block_size = tvb_get_uint32(tvb, offset + 2, ENC_LITTLE_ENDIAN);
+						proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_block_len, tvb, offset + 2, 4, ENC_LITTLE_ENDIAN);
+
+						switch (block_type) {
+							case RFX_PROGRESSIVE_SYNC:
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_sync_magic, tvb, offset + 6, 4, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_sync_version, tvb, offset + 10, 2, ENC_LITTLE_ENDIAN);
+								break;
+							case RFX_PROGRESSIVE_FRAME_BEGIN:
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_frame_index, tvb, offset + 6, 4, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_frame_reg_count, tvb, offset + 10, 2, ENC_LITTLE_ENDIAN);
+								// TODO regions array
+								break;
+							case RFX_PROGRESSIVE_FRAME_END:
+								// Nothing to do!
+								break;
+							case RFX_PROGRESSIVE_CONTEXT:
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_ctx_context_id, tvb, offset + 6, 1, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_ctx_tile_size, tvb, offset + 7, 2, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_ctx_flags, tvb, offset + 9, 1, ENC_LITTLE_ENDIAN);
+								break;
+							case RFX_PROGRESSIVE_REGION: {
+								uint32_t __offset = offset + 6;
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_tile_size, tvb, __offset, 1, ENC_LITTLE_ENDIAN);
+								__offset++;
+
+								uint16_t rects_count = tvb_get_uint16(tvb, __offset, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_num_rects, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+								__offset += 2;
+								uint8_t quant_count = tvb_get_uint8(tvb, __offset);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_num_quant, tvb, __offset, 1, ENC_LITTLE_ENDIAN);
+								__offset++;
+								uint8_t prog_quant_count = tvb_get_uint8(tvb, __offset);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_num_prog_quant, tvb, __offset, 1, ENC_LITTLE_ENDIAN);
+								__offset++;
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_flags, tvb, __offset, 1, ENC_LITTLE_ENDIAN);
+								__offset++;
+								uint16_t tiles_count = tvb_get_uint16(tvb, __offset, ENC_LITTLE_ENDIAN);
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_num_tiles, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+								__offset += 2;
+								proto_tree_add_item(block_tree, hf_egfx_w2s2_progressive_region_tiles_data_size, tvb, __offset, 4, ENC_LITTLE_ENDIAN);
+								__offset += 4;
+								
+								while(rects_count--) {
+									proto_tree *rects_tree = proto_tree_add_subtree(block_tree, tvb, __offset, 8, ett_egfx_w2s2_region_rects, NULL, "Rect");
+									proto_tree_add_item(rects_tree, hf_egfx_w2s2_progressive_region_rect_x, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									__offset += 2;
+									proto_tree_add_item(rects_tree, hf_egfx_w2s2_progressive_region_rect_y, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									__offset += 2;
+									proto_tree_add_item(rects_tree, hf_egfx_w2s2_progressive_region_rect_width, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									__offset += 2;
+									proto_tree_add_item(rects_tree, hf_egfx_w2s2_progressive_region_rect_height, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									__offset += 2;
+								}
+
+								while(quant_count--) {
+									/*proto_tree *quant_tree =*/ proto_tree_add_subtree(block_tree, tvb, __offset, 5, ett_egfx_w2s2_region_rects, NULL, "Quant");
+									__offset += 5;
+									// proto_tree_add_item(quant_tree, hf_egfx_w2s2_progressive_region_rect_x, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									// __offset += 2;
+								}
+
+								while(prog_quant_count--) {
+									/*proto_tree *prog_quant_tree =*/ proto_tree_add_subtree(block_tree, tvb, __offset, 16, ett_egfx_w2s2_region_rects, NULL, "Quant (progressive)");
+									__offset += 16;
+									// proto_tree_add_item(prog_quant_tree, hf_egfx_w2s2_progressive_region_rect_x, tvb, __offset, 2, ENC_LITTLE_ENDIAN);
+									// __offset += 2;
+								}
+
+								while(tiles_count--) {
+									uint32_t tile_offset = __offset;
+									proto_tree *tiles_tree = proto_tree_add_subtree(block_tree, tvb, tile_offset, 0, ett_egfx_w2s2_region_tiles, NULL, NULL);
+						
+									uint16_t block_type = tvb_get_uint16(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+									proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_type, tvb, tile_offset, 2, ENC_LITTLE_ENDIAN);
+									tile_offset += 2;
+
+									uint32_t block_size = tvb_get_uint32(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+									proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 4, ENC_LITTLE_ENDIAN);
+									tile_offset += 4;
+
+									switch (block_type) {
+										case RFX_PROGRESSIVE_TILE_FIRST:
+										case RFX_PROGRESSIVE_TILE_SIMPLE: {
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset++;
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset++;
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset++;
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+
+											if (block_type != RFX_PROGRESSIVE_TILE_UPGRADE)
+											{
+												// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+												tile_offset++;
+											}
+
+											if (block_type == RFX_PROGRESSIVE_TILE_FIRST || block_type == RFX_PROGRESSIVE_TILE_UPGRADE)
+											{
+												// Progressive Quality
+												// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+												tile_offset++;
+											}
+
+											uint16_t yLen = tvb_get_uint16(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+											uint16_t cbLen = tvb_get_uint16(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+											uint16_t crLen = tvb_get_uint16(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+											uint16_t tilelen = tvb_get_uint16(tvb, tile_offset, ENC_LITTLE_ENDIAN);
+											// proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_block_len, tvb, tile_offset, 1, ENC_LITTLE_ENDIAN);
+											tile_offset += 2;
+
+											proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_region_tile_ydata, tvb, tile_offset, yLen, ENC_LITTLE_ENDIAN);
+											tile_offset += yLen;
+											proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_region_tile_cbdata, tvb, tile_offset, cbLen, ENC_LITTLE_ENDIAN);
+											tile_offset += cbLen;
+											proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_region_tile_crdata, tvb, tile_offset, crLen, ENC_LITTLE_ENDIAN);
+											tile_offset += crLen;
+											if (tilelen)
+											{
+												proto_tree_add_item(tiles_tree, hf_egfx_w2s2_progressive_region_tile_data, tvb, tile_offset, tilelen, ENC_LITTLE_ENDIAN);
+												tile_offset += tilelen;
+											}
+											break;
+										}
+										case RFX_PROGRESSIVE_TILE_UPGRADE:
+										default:
+											break;
+									}		
+
+									proto_item_set_len(tiles_tree, block_size);
+									proto_item_set_text(tiles_tree, "Tile (0x%0.4X)", block_type);
+									__offset += block_size;
+								}
+
+								break;
+							}
+						}
+
+						proto_item_set_len(block_tree, block_size);
+						proto_item_set_text(block_tree, "Block %d (0x%0.4X)", ++block_count, block_type);
+						offset += block_size;
+						bitmap_size -= block_size;
+					}
+					break;
+				}
+			}
 
 			break;
 		}
@@ -826,7 +1140,7 @@ void proto_register_rdp_egfx(void) {
 		},
 		{ &hf_egfx_w2s1_codec_id,
 		  { "Codec ID", "rdp_egfx.w2s1.codecid",
-			FT_UINT16, BASE_DEC, NULL, 0x0,
+		    FT_UINT16, BASE_HEX, VALS(rdp_egfx_codec_vals), 0x0,
 			NULL, HFILL }
 		},
 		{ &hf_egfx_w2s1_pixel_format,
@@ -859,6 +1173,51 @@ void proto_register_rdp_egfx(void) {
 			FT_UINT32, BASE_DEC, NULL, 0x0,
 			NULL, HFILL }
 		},
+		{ &hf_egfx_w2s1_bitmap_data_planar_header_cll,
+		  { "CLL", "rdp_egfx.w2s1.bitmap.planar.header.cll",
+			FT_UINT8, BASE_HEX, NULL, PLANAR_HEADER_CLL,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_planar_header_cs,
+		  { "CS", "rdp_egfx.w2s1.bitmap.planar.header.cs",
+			FT_UINT8, BASE_HEX, NULL, PLANAR_HEADER_CS,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_planar_header_rle,
+		  { "RLE", "rdp_egfx.w2s1.bitmap.planar.header.rle",
+			FT_UINT8, BASE_HEX, NULL, PLANAR_HEADER_RLE,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_planar_header_na,
+		  { "NA", "rdp_egfx.w2s1.bitmap.planar.header.na",
+			FT_UINT8, BASE_HEX, NULL, PLANAR_HEADER_NA,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_clear_flag_glyph_index,
+		  { "Glyph index", "rdp_egfx.w2s1.bitmap.clearcodec.flag.glyph.index",
+		    FT_UINT8, BASE_HEX, NULL, CLEARCODEC_FLAG_GLYPH_INDEX,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_clear_flag_glyph_hit,
+		  { "Glyph hit", "rdp_egfx.w2s1.bitmap.clearcodec.flag.glyph.hit",
+		    FT_UINT8, BASE_HEX, NULL, CLEARCODEC_FLAG_GLYPH_HIT,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_clear_flag_cache_reset,
+		  { "Cache reset", "rdp_egfx.w2s1.bitmap.clearcodec.flag.cachereset",
+		    FT_UINT8, BASE_HEX, NULL, CLEARCODEC_FLAG_CACHE_RESET,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_clear_seq_num,
+		  { "Seq num", "rdp_egfx.w2s1.bitmap.clearcodec.seq",
+		    FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s1_bitmap_data_clear_glyph_index,
+		  { "Glyph index", "rdp_egfx.w2s1.bitmap.clearcodec.glyph.index",
+		    FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
 		{ &hf_egfx_w2s2_surface_id,
 		  { "Surface ID", "rdp_egfx.w2s2.surfaceid",
 			FT_UINT16, BASE_DEC, NULL, 0x0,
@@ -866,7 +1225,7 @@ void proto_register_rdp_egfx(void) {
 		},
 		{ &hf_egfx_w2s2_codec_id,
 		  { "Codec ID", "rdp_egfx.w2s2.codecid",
-			FT_UINT16, BASE_DEC, NULL, 0x0,
+		    FT_UINT16, BASE_HEX, VALS(rdp_egfx_codec_vals), 0x0,
 			NULL, HFILL }
 		},
 		{ &hf_egfx_w2s2_codec_context_id,
@@ -884,6 +1243,126 @@ void proto_register_rdp_egfx(void) {
 			FT_UINT32, BASE_DEC, NULL, 0x0,
 			NULL, HFILL }
 		},
+		{ &hf_egfx_w2s2_progressive_block_type,
+		  { "Block type", "rdp_egfx.w2s2.progressive.block.type",
+		    FT_UINT16, BASE_HEX, VALS(rdp_egfx_progressive_block_types_vals), 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_block_len,
+		  { "Block length", "rdp_egfx.w2s2.progressive.block.length",
+			FT_UINT32, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_sync_magic,
+		  { "Magic", "rdp_egfx.w2s2.progressive.sync.magic",
+			FT_UINT32, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_sync_version,
+		  { "Version", "rdp_egfx.w2s2.progressive.sync.version",
+			FT_UINT16, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_frame_index,
+		  { "Index", "rdp_egfx.w2s2.progressive.frame.index",
+			FT_UINT32, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_frame_reg_count,
+		  { "Reg count", "rdp_egfx.w2s2.progressive.frame.regcount",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_ctx_context_id,
+		  { "CtxID", "rdp_egfx.w2s2.progressive.context.id",
+			FT_UINT8, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_ctx_tile_size,
+		  { "Tile size", "rdp_egfx.w2s2.progressive.context.tilesize",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_ctx_flags,
+		  { "Flags", "rdp_egfx.w2s2.progressive.context.flags",
+			FT_UINT8, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tile_size,
+		  { "Tile size", "rdp_egfx.w2s2.progressive.region.tilesize",
+			FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_num_rects,
+		  { "Rects count", "rdp_egfx.w2s2.progressive.region.numrects",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_num_quant,
+		  { "Quant count", "rdp_egfx.w2s2.progressive.region.numquant",
+			FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_num_prog_quant,
+		  { "Quant-prog count", "rdp_egfx.w2s2.progressive.region.numprogquant",
+			FT_UINT8, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_flags,
+		  { "Flags", "rdp_egfx.w2s2.progressive.region.flags",
+			FT_UINT8, BASE_HEX, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_num_tiles,
+		  { "Tiles count", "rdp_egfx.w2s2.progressive.region.numtiles",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tiles_data_size,
+		  { "Data size", "rdp_egfx.w2s2.progressive.region.datasize",
+			FT_UINT32, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_rect_x,
+		  { "X", "rdp_egfx.w2s2.progressive.region.rect.x",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_rect_y,
+		  { "Y", "rdp_egfx.w2s2.progressive.region.rect.y",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_rect_width,
+		  { "Width", "rdp_egfx.w2s2.progressive.region.rect.width",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_rect_height,
+		  { "Height", "rdp_egfx.w2s2.progressive.region.rect.height",
+			FT_UINT16, BASE_DEC, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tile_ydata,
+		  { "Y Data", "rdp_egfx.w2s2.progressive.region.tile.ydata",
+			FT_BYTES, BASE_NONE, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tile_cbdata,
+		  { "CB Data", "rdp_egfx.w2s2.progressive.region.tile.cbdata",
+			FT_BYTES, BASE_NONE, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tile_crdata,
+		  { "CR Data", "rdp_egfx.w2s2.progressive.region.tile.crdata",
+			FT_BYTES, BASE_NONE, NULL, 0x0,
+			NULL, HFILL }
+		},
+		{ &hf_egfx_w2s2_progressive_region_tile_data,
+		  { "Data", "rdp_egfx.w2s2.progressive.region.tile.data",
+			FT_BYTES, BASE_NONE, NULL, 0x0,
+			NULL, HFILL }
+		},
 	};
 
 	static int *ett[] = {
@@ -899,7 +1378,14 @@ void proto_register_rdp_egfx(void) {
 		&ett_egfx_monitordef,
 		&ett_egfx_w2s1,
 		&ett_egfx_w2s1_rect,
+		&ett_egfx_w2s1_bitmap,
 		&ett_egfx_w2s2,
+		&ett_egfx_w2s2_bitmap,
+		&ett_egfx_w2s2_block,
+		&ett_egfx_w2s2_region_rects,
+		&ett_egfx_w2s2_region_quants,
+		&ett_egfx_w2s2_region_prog_quants,
+		&ett_egfx_w2s2_region_tiles,
 	};
 
 	static ei_register_info ei[] = {
