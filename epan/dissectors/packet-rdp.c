@@ -503,8 +503,110 @@ static int hf_rdp_fastpathOrdersAltSecOrderize;
 static int hf_rdp_fastpathOrdersAltSecFieldPresentFlags;
 static int hf_rdp_fastpathOrdersAltSecWindowID;
 static int hf_rdp_fastpathOrdersAltSecOwnerWindowID;
+
+#define WS_BORDER	0x00800000L	// The window has a thin-line border
+#define WS_CAPTION	0x00C00000L	// The window has a title bar (includes the WS_BORDER style).
+#define WS_CHILD	0x40000000L	// The window is a child window. A window with this style cannot have a menu bar. This style cannot be used with the WS_POPUP style.
+#define WS_CHILDWINDOW	0x40000000L	// Same as the WS_CHILD style.
+#define WS_CLIPCHILDREN	0x02000000L	// Excludes the area occupied by child windows when drawing occurs within the parent window. This style is used when creating the parent window.
+#define WS_CLIPSIBLINGS	0x04000000L	// Clips child windows relative to each other; that is, when a particular child window receives a WM_PAINT message, the WS_CLIPSIBLINGS style clips all other overlapping child windows out of the region of the child window to be updated. If WS_CLIPSIBLINGS is not specified and child windows overlap, it is possible, when drawing within the client area of a child window, to draw within the client area of a neighboring child window.
+#define WS_DISABLED	0x08000000L	// The window is initially disabled. A disabled window cannot receive input from the user. To change this after a window has been created, use the EnableWindow function.
+#define WS_DLGFRAME	0x00400000L	// The window has a border of a style typically used with dialog boxes. A window with this style cannot have a title bar.
+#define WS_GROUP	0x00020000L	// The window is the first control of a group of controls. The group consists of this first control and all controls defined after it, up to the next control with the WS_GROUP style. The first control in each group usually has the WS_TABSTOP style so that the user can move from group to group. The user can subsequently change the keyboard focus from one control in the group to the next control in the group by using the direction keys.
+#define WS_HSCROLL	0x00100000L	// The window has a horizontal scroll bar.
+#define WS_ICONIC	0x20000000L	// The window is initially minimized. Same as the WS_MINIMIZE style.
+#define WS_MAXIMIZE	0x01000000L	// The window is initially maximized.
+#define WS_MAXIMIZEBOX	0x00010000L	// The window has a maximize button. Cannot be combined with the WS_EX_CONTEXTHELP style. The WS_SYSMENU style must also be specified.
+#define WS_MINIMIZE	0x20000000L	// The window is initially minimized. Same as the WS_ICONIC style.
+#define WS_MINIMIZEBOX	0x00020000L	// The window has a minimize button. Cannot be combined with the WS_EX_CONTEXTHELP style. The WS_SYSMENU style must also be specified.
+#define WS_OVERLAPPED	0x00000000L	// The window is an overlapped window. An overlapped window has a title bar and a border. Same as the WS_TILED style.
+#define WS_OVERLAPPEDWINDOW	(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)	// The window is an overlapped window. Same as the WS_TILEDWINDOW style.
+#define WS_POPUP	0x80000000L	// The window is a pop-up window. This style cannot be used with the WS_CHILD style.
+#define WS_POPUPWINDOW	(WS_POPUP | WS_BORDER | WS_SYSMENU)	// The window is a pop-up window. The WS_CAPTION and WS_POPUPWINDOW styles must be combined to make the window menu visible.
+#define WS_SIZEBOX	0x00040000L	// The window has a sizing border. Same as the WS_THICKFRAME style.
+#define WS_SYSMENU	0x00080000L	// The window has a window menu on its title bar. The WS_CAPTION style must also be specified.
+#define WS_TABSTOP	0x00010000L	// The window is a control that can receive the keyboard focus when the user presses the TAB key. Pressing the TAB key changes the keyboard focus to the next control with the WS_TABSTOP style.
+#define WS_THICKFRAME	0x00040000L	// The window has a sizing border. Same as the WS_SIZEBOX style.
+#define WS_TILED	0x00000000L	// The window is an overlapped window. An overlapped window has a title bar and a border. Same as the WS_OVERLAPPED style.
+#define WS_TILEDWINDOW	(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)	// The window is an overlapped window. Same as the WS_OVERLAPPEDWINDOW style.
+#define WS_VISIBLE	0x10000000L	// The window is initially visible.
+#define WS_VSCROLL	0x00200000L	// The window has a vertical scroll bar.
+
 static int hf_rdp_fastpathOrdersAltSecWindowStyle;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_BORDER;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CAPTION;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILD;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILDWINDOW;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPCHILDREN;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPSIBLINGS;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DISABLED;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DLGFRAME;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_GROUP;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_HSCROLL;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_ICONIC;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZE;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZEBOX;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZE;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZEBOX;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_POPUP;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SIZEBOX;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SYSMENU;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_TABSTOP;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_THICKFRAME;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VISIBLE;
+static int hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VSCROLL;
+
+#define WS_EX_ACCEPTFILES 0x00000010L // The window accepts drag-drop files.
+#define WS_EX_APPWINDOW 0x00040000L // Forces a top-level window onto the taskbar when the window is visible.
+#define WS_EX_CLIENTEDGE 0x00000200L // The window has a border with a sunken edge.
+#define WS_EX_COMPOSITED 0x02000000L // Paints all descendants of a window in bottom-to-top painting order using double-buffering. Bottom-to-top painting order allows a descendent window to have translucency (alpha) and transparency (color-key) effects, but only if the descendent window also has the WS_EX_TRANSPARENT bit set. Double-buffering allows the window and its descendents to be painted without flicker. This cannot be used if the window has a class style of CS_OWNDC, CS_CLASSDC, or CS_PARENTDC.  Windows 2000: This style is not supported.
+#define WS_EX_CONTEXTHELP 0x00000400L // The title bar of the window includes a question mark. When the user clicks the question mark, the cursor changes to a question mark with a pointer. If the user then clicks a child window, the child receives a WM_HELP message. The child window should pass the message to the parent window procedure, which should call the WinHelp function using the HELP_WM_HELP command. The Help application displays a pop-up window that typically contains help for the child window.  #define WS_EX_CONTEXTHELP cannot be used with the WS_MAXIMIZEBOX or WS_MINIMIZEBOX styles.
+#define WS_EX_CONTROLPARENT 0x00010000L // The window itself contains child windows that should take part in dialog box navigation. If this style is specified, the dialog manager recurses into children of this window when performing navigation operations such as handling the TAB key, an arrow key, or a keyboard mnemonic.
+#define WS_EX_DLGMODALFRAME 0x00000001L // The window has a double border; the window can, optionally, be created with a title bar by specifying the WS_CAPTION style in the dwStyle parameter.
+#define WS_EX_LAYERED 0x00080000 // The window is a layered window. This style cannot be used if the window has a class style of either CS_OWNDC or CS_CLASSDC.  Windows 8: The WS_EX_LAYERED style is supported for top-level windows and child windows. Previous Windows versions support WS_EX_LAYERED only for top-level windows.
+#define WS_EX_LAYOUTRTL 0x00400000L // If the shell language is Hebrew, Arabic, or another language that supports reading order alignment, the horizontal origin of the window is on the right edge. Increasing horizontal values advance to the left.
+#define WS_EX_LEFT 0x00000000L // The window has generic left-aligned properties. This is the default.
+#define WS_EX_LEFTSCROLLBAR 0x00004000L // If the shell language is Hebrew, Arabic, or another language that supports reading order alignment, the vertical scroll bar (if present) is to the left of the client area. For other languages, the style is ignored.
+#define WS_EX_LTRREADING 0x00000000L // The window text is displayed using left-to-right reading-order properties. This is the default.
+#define WS_EX_MDICHILD 0x00000040L // The window is a MDI child window.
+#define WS_EX_NOACTIVATE 0x08000000L // A top-level window created with this style does not become the foreground window when the user clicks it. The system does not bring this window to the foreground when the user minimizes or closes the foreground window.  The window should not be activated through programmatic access or via keyboard navigation by accessible technology, such as Narrator.  To activate the window, use the SetActiveWindow or SetForegroundWindow function.  The window does not appear on the taskbar by default. To force the window to appear on the taskbar, use the WS_EX_APPWINDOW style.
+#define WS_EX_NOINHERITLAYOUT 0x00100000L // The window does not pass its window layout to its child windows.
+#define WS_EX_NOPARENTNOTIFY 0x00000004L // The child window created with this style does not send the WM_PARENTNOTIFY message to its parent window when it is created or destroyed.
+#define WS_EX_NOREDIRECTIONBITMAP 0x00200000L // The window does not render to a redirection surface. This is for windows that do not have visible content or that use mechanisms other than surfaces to provide their visual.
+#define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE) // The window is an overlapped window.
+#define WS_EX_PALETTEWINDOW (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST) // The window is palette window, which is a modeless dialog box that presents an array of commands.
+#define WS_EX_RIGHT 0x00001000L // The window has generic "right-aligned" properties. This depends on the window class. This style has an effect only if the shell language is Hebrew, Arabic, or another language that supports reading-order alignment; otherwise, the style is ignored.  Using the WS_EX_RIGHT style for static or edit controls has the same effect as using the SS_RIGHT or ES_RIGHT style, respectively. Using this style with button controls has the same effect as using BS_RIGHT and BS_RIGHTBUTTON styles.
+#define WS_EX_RIGHTSCROLLBAR 0x00000000L // The vertical scroll bar (if present) is to the right of the client area. This is the default.
+#define WS_EX_RTLREADING 0x00002000L // If the shell language is Hebrew, Arabic, or another language that supports reading-order alignment, the window text is displayed using right-to-left reading-order properties. For other languages, the style is ignored.
+#define WS_EX_STATICEDGE 0x00020000L // The window has a three-dimensional border style intended to be used for items that do not accept user input.
+#define WS_EX_TOOLWINDOW 0x00000080L // The window is intended to be used as a floating toolbar. A tool window has a title bar that is shorter than a normal title bar, and the window title is drawn using a smaller font. A tool window does not appear in the taskbar or in the dialog that appears when the user presses ALT+TAB. If a tool window has a system menu, its icon is not displayed on the title bar. However, you can display the system menu by right-clicking or by typing ALT+SPACE.
+#define WS_EX_TOPMOST 0x00000008L // The window should be placed above all non-topmost windows and should stay above them, even when the window is deactivated. To add or remove this style, use the SetWindowPos function.
+#define WS_EX_TRANSPARENT 0x00000020L // The window should not be painted until siblings beneath the window (that were created by the same thread) have been painted. The window appears transparent because the bits of underlying sibling windows have already been painted.  To achieve transparency without these restrictions, use the SetWindowRgn function.
+#define WS_EX_WINDOWEDGE 0x00000100L // The window has a border with a raised edge.
+
 static int hf_rdp_fastpathOrdersAltSecWindowExStyle;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_ACCEPTFILES;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_APPWINDOW;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CLIENTEDGE;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_COMPOSITED;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTEXTHELP;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTROLPARENT;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_DLGMODALFRAME;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYERED;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYOUTRTL;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LEFTSCROLLBAR;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_MDICHILD;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOACTIVATE;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOINHERITLAYOUT;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOPARENTNOTIFY;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOREDIRECTIONBITMAP;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RIGHT;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RTLREADING;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_STATICEDGE;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOOLWINDOW;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOPMOST;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TRANSPARENT;
+static int hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_WINDOWEDGE;
 
 #define SHOW_STATE_DONT_SHOW  0x00
 #define SHOW_STATE_MINIMIZED  0x02
@@ -1974,7 +2076,7 @@ dissect_rdp_shareDataHeader(tvbuff_t *tvb, int offset, packet_info *pinfo, proto
   offset = dissect_rdp_fields(tvb, offset, pinfo, tree, share_fields, 0);
 
   col_append_str(pinfo->cinfo, COL_INFO, "RDP PDU Type: ");
-  col_append_sep_str(pinfo->cinfo, COL_INFO, "", val_to_str_const(pduType2, rdp_pduType2_vals, "Unknown"));
+  col_append_sep_str(pinfo->cinfo, COL_INFO, "", val_to_str_const(pduType2, rdp_pduType2_vals, "Unknown PDU type 2"));
 
   fields = NULL;
   switch(pduType2) {
@@ -2041,7 +2143,7 @@ dissect_rdp_shareDataHeader(tvbuff_t *tvb, int offset, packet_info *pinfo, proto
 
   if (pduType2 == PDUTYPE2_CONTROL) {
     col_append_sep_str(pinfo->cinfo, COL_INFO, ", ", "Action: ");
-    col_append_sep_str(pinfo->cinfo, COL_INFO, "", val_to_str_const(action, rdp_action_vals, "Unknown"));
+    col_append_sep_str(pinfo->cinfo, COL_INFO, "", val_to_str_const(action, rdp_action_vals, "Unknown action"));
   }
 
   return offset;
@@ -2593,7 +2695,7 @@ dissect_rdp_SendData(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* 
 
       if (!(flags & SEC_ENCRYPT)) {
 
-        /*offset =*/ dissect_rdp_fields(tvb, offset, pinfo, next_tree, ue_fields, 0);
+        /*offset =*/ dissect_rdp_fields(tvb, offset, pinfo, next_tree, ue_fields, 3);
       } else {
 
         /*offset =*/ dissect_rdp_encrypted(tvb, offset, pinfo, next_tree, NULL);
@@ -2609,7 +2711,7 @@ dissect_rdp_SendData(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* 
 
         offset = dissect_rdp_fields(tvb, offset, pinfo, next_tree, msg_fields, 0);
 
-        col_append_sep_str(pinfo->cinfo, COL_INFO, ", ", val_to_str_const(bMsgType, rdp_bMsgType_vals, "Unknown"));
+        col_append_sep_str(pinfo->cinfo, COL_INFO, ", ", val_to_str_const(bMsgType, rdp_bMsgType_vals, "Unknown message type"));
 
         switch(bMsgType) {
         case LICENSE_REQUEST:
@@ -2663,7 +2765,7 @@ dissect_rdp_SendData(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* 
       pduType &= PDUTYPE_TYPE_MASK; /* mask out just the type */
 
       if (pduType != PDUTYPE_DATAPDU)
-        col_append_sep_str(pinfo->cinfo, COL_INFO, ", ", val_to_str_const(pduType, rdp_pduTypeType_vals, "Unknown"));
+        col_append_sep_str(pinfo->cinfo, COL_INFO, ", ", val_to_str_const(pduType, rdp_pduTypeType_vals, "Unknown PDU type"));
 
       switch(pduType) {
       case PDUTYPE_DEMANDACTIVEPDU:
@@ -3039,8 +3141,8 @@ dissect_rdp_ServerData(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
       lcl_offset = dissect_rdp_fields(tvb, offset, pinfo, next_tree, ss_fields, 0);
 
       col_append_sep_fstr(pinfo->cinfo, COL_INFO, " ", "Encryption: %s (%s)",
-                          val_to_str_const(encryptionMethod, rdp_encryptionMethod_vals, "Unknown"),
-                          val_to_str_const(encryptionLevel, rdp_encryptionLevel_vals, "Unknown"));
+                          val_to_str_const(encryptionMethod, rdp_encryptionMethod_vals, "Unknown encryption method"),
+                          val_to_str_const(encryptionLevel, rdp_encryptionLevel_vals, "Unknown encryption level"));
 
       if ((encryptionLevel != 0) || (encryptionMethod != 0)) {
         /*lcl_offset =*/ dissect_rdp_fields(tvb, lcl_offset, pinfo, next_tree, encryption_fields, 0);
@@ -3571,7 +3673,7 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
 			  event_name = "LargePointer";
 			  break;
 		  default:
-			  event_name = "Unknown";
+			  event_name = "Unknown fasth-path";
 			  break;
 		  }
 
@@ -3702,9 +3804,60 @@ dissect_rdp_fastpath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
 
                         if (fields & 0x00000008)
                         {
-                          proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowStyle, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree *styles_tree;
+                          uint32_t styles = tvb_get_uint32(tvb, offset, ENC_LITTLE_ENDIAN);
+                          styles_tree = proto_tree_add_subtree_format(altsec_tree, tvb, offset, 4, hf_rdp_fastpathOrdersAltSecWindowStyle, NULL, "Style (0x%X)", styles);
+
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_BORDER, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CAPTION, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILD, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILDWINDOW, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPCHILDREN, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPSIBLINGS, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DISABLED, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DLGFRAME, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_GROUP, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_HSCROLL, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_ICONIC, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZEBOX, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZEBOX, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_POPUP, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SIZEBOX, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SYSMENU, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_TABSTOP, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_THICKFRAME, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VISIBLE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(styles_tree, hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VSCROLL, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                           offset += 4;
-                          proto_tree_add_item(altsec_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+
+                          proto_tree *ext_styles_tree;
+                          uint32_t ext_styles = tvb_get_uint32(tvb, offset, ENC_LITTLE_ENDIAN);
+                          ext_styles_tree = proto_tree_add_subtree_format(altsec_tree, tvb, offset, 4, hf_rdp_fastpathOrdersAltSecWindowExStyle, NULL, "Ext. style (0x%X)", ext_styles);
+
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_ACCEPTFILES, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_APPWINDOW, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CLIENTEDGE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_COMPOSITED, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTEXTHELP, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTROLPARENT, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_DLGMODALFRAME, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYERED, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYOUTRTL, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LEFTSCROLLBAR, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_MDICHILD, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOACTIVATE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOINHERITLAYOUT, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOPARENTNOTIFY, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOREDIRECTIONBITMAP, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RIGHT, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RTLREADING, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_STATICEDGE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOOLWINDOW, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOPMOST, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TRANSPARENT, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+                          proto_tree_add_item(ext_styles_tree, hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_WINDOWEDGE, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                           offset += 4;
                         }
 
@@ -5748,13 +5901,181 @@ proto_register_rdp(void) {
       { "Owner window ID", "rdp.fastpath.orders.altsec.window.ownerid",
             FT_UINT32, BASE_HEX, NULL, 0x00,
             NULL, HFILL }},
-    { &hf_rdp_fastpathOrdersAltSecWindowStyle,
-      { "Style", "rdp.fastpath.orders.altsec.window.style",
-            FT_UINT32, BASE_HEX, NULL, 0x00,
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_BORDER,
+      { "WS_BORDER", "rdp.fastpath.orders.altsec.window.style.WS_BORDER",
+            FT_UINT32, BASE_HEX, NULL, 0x00800000L,
             NULL, HFILL }},
-    { &hf_rdp_fastpathOrdersAltSecWindowExStyle,
-      { "Ext. Style", "rdp.fastpath.orders.altsec.window.exstyle",
-            FT_UINT32, BASE_HEX, NULL, 0x00,
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CAPTION,
+      { "WS_CAPTION", "rdp.fastpath.orders.altsec.window.style.WS_CAPTION",
+            FT_UINT32, BASE_HEX, NULL, 0x00C00000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILD,
+      { "WS_CHILD", "rdp.fastpath.orders.altsec.window.style.WS_CHILD",
+            FT_UINT32, BASE_HEX, NULL, 0x40000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CHILDWINDOW,
+      { "WS_CHILDWINDOW", "rdp.fastpath.orders.altsec.window.style.WS_CHILDWINDOW",
+            FT_UINT32, BASE_HEX, NULL, 0x40000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPCHILDREN,
+      { "WS_CLIPCHILDREN", "rdp.fastpath.orders.altsec.window.style.WS_CLIPCHILDREN",
+            FT_UINT32, BASE_HEX, NULL, 0x02000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_CLIPSIBLINGS,
+      { "WS_CLIPSIBLINGS", "rdp.fastpath.orders.altsec.window.style.WS_CLIPSIBLINGS",
+            FT_UINT32, BASE_HEX, NULL, 0x04000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DISABLED,
+      { "WS_DISABLED", "rdp.fastpath.orders.altsec.window.style.WS_DISABLED",
+            FT_UINT32, BASE_HEX, NULL, 0x08000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_DLGFRAME,
+      { "WS_DLGFRAME", "rdp.fastpath.orders.altsec.window.style.WS_DLGFRAME",
+            FT_UINT32, BASE_HEX, NULL, 0x00400000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_GROUP,
+      { "WS_GROUP", "rdp.fastpath.orders.altsec.window.style.WS_GROUP",
+            FT_UINT32, BASE_HEX, NULL, 0x00020000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_HSCROLL,
+      { "WS_HSCROLL", "rdp.fastpath.orders.altsec.window.style.WS_HSCROLL",
+            FT_UINT32, BASE_HEX, NULL, 0x00100000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_ICONIC,
+      { "WS_ICONIC", "rdp.fastpath.orders.altsec.window.style.WS_ICONIC",
+            FT_UINT32, BASE_HEX, NULL, 0x20000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZE,
+      { "WS_MAXIMIZE", "rdp.fastpath.orders.altsec.window.style.WS_MAXIMIZE",
+            FT_UINT32, BASE_HEX, NULL, 0x01000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MAXIMIZEBOX,
+      { "WS_MAXIMIZEBOX", "rdp.fastpath.orders.altsec.window.style.WS_MAXIMIZEBOX",
+            FT_UINT32, BASE_HEX, NULL, 0x00010000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZE,
+      { "WS_MINIMIZE", "rdp.fastpath.orders.altsec.window.style.WS_MINIMIZE",
+            FT_UINT32, BASE_HEX, NULL, 0x20000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_MINIMIZEBOX,
+      { "WS_MINIMIZEBOX", "rdp.fastpath.orders.altsec.window.style.WS_MINIMIZEBOX",
+            FT_UINT32, BASE_HEX, NULL, 0x00020000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_POPUP,
+      { "WS_POPUP", "rdp.fastpath.orders.altsec.window.style.WS_POPUP",
+            FT_UINT32, BASE_HEX, NULL, 0x80000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SIZEBOX,
+      { "WS_SIZEBOX", "rdp.fastpath.orders.altsec.window.style.WS_SIZEBOX",
+            FT_UINT32, BASE_HEX, NULL, 0x00040000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_SYSMENU,
+      { "WS_SYSMENU", "rdp.fastpath.orders.altsec.window.style.WS_SYSMENU",
+            FT_UINT32, BASE_HEX, NULL, 0x00080000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_TABSTOP,
+      { "WS_TABSTOP", "rdp.fastpath.orders.altsec.window.style.WS_TABSTOP",
+            FT_UINT32, BASE_HEX, NULL, 0x00010000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_THICKFRAME,
+      { "WS_THICKFRAME", "rdp.fastpath.orders.altsec.window.style.WS_THICKFRAME",
+            FT_UINT32, BASE_HEX, NULL, 0x00040000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VISIBLE,
+      { "WS_VISIBLE", "rdp.fastpath.orders.altsec.window.style.WS_VISIBLE",
+            FT_UINT32, BASE_HEX, NULL, 0x10000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowStyle_WS_VSCROLL,
+      { "WS_VSCROLL", "rdp.fastpath.orders.altsec.window.style.WS_VSCROLL",
+            FT_UINT32, BASE_HEX, NULL, 0x00200000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_ACCEPTFILES,
+      { "WS_EX_ACCEPTFILES", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_ACCEPTFILES",
+            FT_UINT32, BASE_HEX, NULL, 0x00000010L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_APPWINDOW,
+      { "WS_EX_APPWINDOW", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_APPWINDOW",
+            FT_UINT32, BASE_HEX, NULL, 0x00040000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CLIENTEDGE,
+      { "WS_EX_CLIENTEDGE", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_CLIENTEDGE",
+            FT_UINT32, BASE_HEX, NULL, 0x00000200L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_COMPOSITED,
+      { "WS_EX_COMPOSITED", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_COMPOSITED",
+            FT_UINT32, BASE_HEX, NULL, 0x02000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTEXTHELP,
+      { "WS_EX_CONTEXTHELP", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_CONTEXTHELP",
+            FT_UINT32, BASE_HEX, NULL, 0x00000400L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_CONTROLPARENT,
+      { "WS_EX_CONTROLPARENT", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_CONTROLPARENT",
+            FT_UINT32, BASE_HEX, NULL, 0x00010000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_DLGMODALFRAME,
+      { "WS_EX_DLGMODALFRAME", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_DLGMODALFRAME",
+            FT_UINT32, BASE_HEX, NULL, 0x00000001L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYERED,
+      { "WS_EX_LAYERED", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_LAYERED",
+            FT_UINT32, BASE_HEX, NULL, 0x00080000,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LAYOUTRTL,
+      { "WS_EX_LAYOUTRTL", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_LAYOUTRTL",
+            FT_UINT32, BASE_HEX, NULL, 0x00400000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_LEFTSCROLLBAR,
+      { "WS_EX_LEFTSCROLLBAR", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_LEFTSCROLLBAR",
+            FT_UINT32, BASE_HEX, NULL, 0x00004000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_MDICHILD,
+      { "WS_EX_MDICHILD", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_MDICHILD",
+            FT_UINT32, BASE_HEX, NULL, 0x00000040L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOACTIVATE,
+      { "WS_EX_NOACTIVATE", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_NOACTIVATE",
+            FT_UINT32, BASE_HEX, NULL, 0x08000000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOINHERITLAYOUT,
+      { "WS_EX_NOINHERITLAYOUT", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_NOINHERITLAYOUT",
+            FT_UINT32, BASE_HEX, NULL, 0x00100000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOPARENTNOTIFY,
+      { "WS_EX_NOPARENTNOTIFY", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_NOPARENTNOTIFY",
+            FT_UINT32, BASE_HEX, NULL, 0x00000004L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_NOREDIRECTIONBITMAP,
+      { "WS_EX_NOREDIRECTIONBITMAP", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_NOREDIRECTIONBITMAP",
+            FT_UINT32, BASE_HEX, NULL, 0x00200000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RIGHT,
+      { "WS_EX_RIGHT", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_RIGHT",
+            FT_UINT32, BASE_HEX, NULL, 0x00001000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_RTLREADING,
+      { "WS_EX_RTLREADING", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_RTLREADING",
+            FT_UINT32, BASE_HEX, NULL, 0x00002000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_STATICEDGE,
+      { "WS_EX_STATICEDGE", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_STATICEDGE",
+            FT_UINT32, BASE_HEX, NULL, 0x00020000L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOOLWINDOW,
+      { "WS_EX_TOOLWINDOW", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_TOOLWINDOW",
+            FT_UINT32, BASE_HEX, NULL, 0x00000080L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TOPMOST,
+      { "WS_EX_TOPMOST", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_TOPMOST",
+            FT_UINT32, BASE_HEX, NULL, 0x00000008L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_TRANSPARENT,
+      { "WS_EX_TRANSPARENT", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_TRANSPARENT",
+            FT_UINT32, BASE_HEX, NULL, 0x00000020L,
+            NULL, HFILL }},
+    { &hf_rdp_fastpathOrdersAltSecWindowExStyle_WS_EX_WINDOWEDGE,
+      { "WS_EX_WINDOWEDGE", "rdp.fastpath.orders.altsec.window.exstyle.WS_EX_WINDOWEDGE",
+            FT_UINT32, BASE_HEX, NULL, 0x00000100L,
             NULL, HFILL }},
     { &hf_rdp_fastpathOrdersAltSecWindowShow,
       { "Show", "rdp.fastpath.orders.altsec.window.show",
@@ -5997,6 +6318,8 @@ proto_register_rdp(void) {
     &hf_rdp_fastpathOrdersAltSecWindowRect,
     &hf_rdp_fastpathOrdersAltSecWindowVisibilityNumRects,
     &hf_rdp_fastpathOrdersAltSecWindowVisibilityRect,
+    &hf_rdp_fastpathOrdersAltSecWindowStyle,
+    &hf_rdp_fastpathOrdersAltSecWindowExStyle
   };
   static ei_register_info ei[] = {
      { &ei_rdp_neg_len_invalid, { "rdp.neg_len.invalid", PI_PROTOCOL, PI_ERROR, "Invalid length", EXPFILL }},

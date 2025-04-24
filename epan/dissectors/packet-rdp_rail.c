@@ -87,6 +87,8 @@ static int hf_rail_activate_enabled;
 static int hf_rail_sysparam_server_params;
 static int hf_rail_sysparam_client_params;
 
+static int hf_rail_sysparam_client_params_spi_set_drag_full_windows;
+
 static int hf_rail_sysparam_client_params_spi_setworkarea_left;
 static int hf_rail_sysparam_client_params_spi_setworkarea_top;
 static int hf_rail_sysparam_client_params_spi_setworkarea_right;
@@ -263,6 +265,7 @@ dissect_rdp_rail(tvbuff_t *tvb _U_, packet_info *pinfo, proto_tree *parent_tree 
 	uint32_t pduLength;
 	proto_tree *tree;
 	uint32_t windowId;
+	uint16_t isMoveStart;
 	bool packetToServer = rdp_isServerAddressTarget(pinfo);
 
 	parent_tree = proto_tree_get_root(parent_tree);
@@ -338,6 +341,9 @@ dissect_rdp_rail(tvbuff_t *tvb _U_, packet_info *pinfo, proto_tree *parent_tree 
 
 			switch(clientParam) {
 			case SPI_SETDRAGFULLWINDOWS:
+                	proto_tree_add_item(tree, hf_rail_sysparam_client_params_spi_set_drag_full_windows, tvb, offset, 1, ENC_LITTLE_ENDIAN);
+                	offset++;
+				break;
 			case SPI_SETKEYBOARDCUES:
 			case SPI_SETKEYBOARDPREF:
 				break;
@@ -399,6 +405,8 @@ dissect_rdp_rail(tvbuff_t *tvb _U_, packet_info *pinfo, proto_tree *parent_tree 
 		proto_tree_add_item(tree, hf_rail_windowmove_bottom, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 		break;
 	case TS_RAIL_ORDER_LOCALMOVESIZE:
+        isMoveStart = tvb_get_uint16(tvb, offset, ENC_LITTLE_ENDIAN);
+		col_append_fstr(pinfo->cinfo, COL_INFO, "(%s)", isMoveStart ? "Start" : "End");
 		proto_tree_add_item(tree, hf_rail_localmovesize_isMoveSizeStart, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 		offset += 2;
 		proto_tree_add_item(tree, hf_rail_localmovesize_moveSizeType, tvb, offset, 2, ENC_LITTLE_ENDIAN);
@@ -686,6 +694,11 @@ void proto_register_rdp_rail(void) {
 		{ &hf_rail_sysparam_client_params,
 		  { "SystemParameter", "rdp_rail.sysparam.clientparameter",
 			FT_UINT32, BASE_HEX, VALS(rdp_rail_client_system_params_vals), 0x0,
+			NULL, HFILL }},
+
+		{ &hf_rail_sysparam_client_params_spi_set_drag_full_windows,
+		  { "Enabled", "rdp_rail.sysparam.clientparameter.spi_setdragfullwindows",
+			FT_BOOLEAN, BASE_DEC, NULL, 0x0,
 			NULL, HFILL }},
 
 		{ &hf_rail_sysparam_client_params_spi_setworkarea_left,
