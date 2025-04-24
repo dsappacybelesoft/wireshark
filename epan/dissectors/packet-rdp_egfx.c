@@ -671,7 +671,8 @@ dissect_rdp_egfx_payload(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_t
 						proto_tree_add_item(bitmap_tree, hf_egfx_w2s1_bitmap_data_clear_glyph_index, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 						offset += 2;
 					}
-					else if (!(flags & CLEARCODEC_FLAG_GLYPH_HIT))
+
+					if (!(flags & CLEARCODEC_FLAG_GLYPH_HIT) || !(flags & CLEARCODEC_FLAG_GLYPH_INDEX))
 					{
 						proto_tree *composite_payload_tree;
 						composite_payload_tree = proto_tree_add_subtree(bitmap_tree, tvb, offset, data_size - 2, ett_egfx_w2s1_composite_payload, NULL, "Composite payload");
